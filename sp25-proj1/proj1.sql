@@ -96,19 +96,53 @@ AS
 -- Question 3i
 CREATE VIEW q3i(playerid, namefirst, namelast, yearid, slg)
 AS
-  SELECT 1, 1, 1, 1, 1 -- replace this line
+  SELECT b.playerid, b.namefirst, b.namelast, b.yearid
+    CAST((b.H - b.H2B - b.H3B- b.HR+ 2 * b.H2B + 3 * b.H3B + 4* b.HR) AS FLOAT) /b.AB as slg
+   FROM batting b
+   INNER JOIN PEOPLE p ON b.playerID = p.playerID
+   WHERE b.AB > 50
+   ORDER BY slg DESC, b.yearid ASC, b.playerid ASC
+   LIMIT 10
 ;
 
 -- Question 3ii
 CREATE VIEW q3ii(playerid, namefirst, namelast, lslg)
 AS
-  SELECT 1, 1, 1, 1 -- replace this line
+  SELECT b.playerid, b.namefirst, b.namelast, b.yearid,
+      CAST((SUM(b.H - b.H2B - b.H3B- b.HR)+ 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4* SUM(b.HR)) AS FLOAT) /b.AB as slg
+  FROM batting b
+  INNER JOIN PEOPLE p ON b.playerID = p.playerID
+  GROUP BY b.playerID
+  HAVING SUM(b.AB) > 50
+  ORDER BY slg DESC, b.yearid ASC, b.playerid ASC
+  LIMIT 10
 ;
 
 -- Question 3iii
 CREATE VIEW q3iii(namefirst, namelast, lslg)
 AS
-  SELECT 1, 1, 1 -- replace this line
+WITH lifetime_slg AS (
+  SELECT b.playerid, b.namefirst, b.namelast, b.yearid,
+    CAST((SUM(b.H - b.H2B - b.H3B- b.HR)+ 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4* SUM(b.HR)) AS FLOAT) /b.AB as lslg
+  FROM batting b
+  INNER JOIN PEOPLE p ON b.playerID = p.playerID
+  GROUP BY b.playerID
+  HAVING SUM(b.AB) > 50
+),
+
+
+mays_slg AS (
+    SELECT lslg
+    FROM lifetime_slg
+    WHERE playerID = 'mayswi01'
+)
+SELECT namefirst,namelast, lslg
+FROM lifetime_slg
+WHERE lslg > (
+    SELECT lslg FROM mays_slg
+)
+ORDER BY slg DESC, b.yearid ASC, b.playerid ASC
+
 ;
 
 -- Question 4i
