@@ -36,7 +36,7 @@ CREATE VIEW q1ii(namefirst, namelast, birthyear)
 AS
   SELECT namefirst, namelast, birthyear
   FROM people
-  WHERE namefirst LIKE "% %"
+  WHERE namefirst LIKE '% %'
   ORDER BY namefirst, namelast
 ;
 
@@ -96,7 +96,7 @@ AS
 -- Question 3i
 CREATE VIEW q3i(playerid, namefirst, namelast, yearid, slg)
 AS
-  SELECT b.playerid, b.namefirst, b.namelast, b.yearid,
+  SELECT b.playerid, p.namefirst, p.namelast, b.yearid,
     CAST((b.H - b.H2B - b.H3B- b.HR+ 2 * b.H2B + 3 * b.H3B + 4* b.HR) AS FLOAT) /b.AB as slg
    FROM batting b
    INNER JOIN PEOPLE p ON b.playerID = p.playerID
@@ -108,13 +108,13 @@ AS
 -- Question 3ii
 CREATE VIEW q3ii(playerid, namefirst, namelast, lslg)
 AS
-  SELECT b.playerid, b.namefirst, b.namelast, b.yearid,
-      CAST((SUM(b.H - b.H2B - b.H3B- b.HR)+ 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4* SUM(b.HR)) AS FLOAT) /b.AB as slg
+  SELECT b.playerid, p.namefirst, p.namelast,
+      CAST((SUM(b.H - b.H2B - b.H3B- b.HR)+ 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4* SUM(b.HR)) AS FLOAT) /SUM(b.AB) as lslg
   FROM batting b
   INNER JOIN PEOPLE p ON b.playerID = p.playerID
   GROUP BY b.playerID
   HAVING SUM(b.AB) > 50
-  ORDER BY slg DESC, b.yearid ASC, b.playerid ASC
+  ORDER BY lslg DESC, b.yearid ASC, b.playerid ASC
   LIMIT 10
 ;
 
@@ -122,8 +122,8 @@ AS
 CREATE VIEW q3iii(namefirst, namelast, lslg)
 AS
 WITH lifetime_slg AS (
-  SELECT b.playerid, b.namefirst, b.namelast, b.yearid,
-    CAST((SUM(b.H - b.H2B - b.H3B- b.HR)+ 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4* SUM(b.HR)) AS FLOAT) /b.AB as lslg
+  SELECT b.playerid, p.namefirst, p.namelast,
+    CAST((SUM(b.H - b.H2B - b.H3B- b.HR)+ 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4* SUM(b.HR)) AS FLOAT) /SUM(b.AB) as lslg
   FROM batting b
   INNER JOIN PEOPLE p ON b.playerID = p.playerID
   GROUP BY b.playerID
@@ -141,7 +141,7 @@ FROM lifetime_slg
 WHERE lslg > (
     SELECT lslg FROM mays_slg
 )
-ORDER BY slg DESC, b.yearid ASC, b.playerid ASC
+ORDER BY lslg DESC
 
 ;
 
@@ -163,14 +163,19 @@ AS
 CREATE VIEW q4ii(binid, low, high, count)
 AS
 WITH
-   stats AS (
+   stats_raw AS (
     SELECT
         MIN(salary) AS min_s,
-        MAX(salary) AS max_s,
-        ((max_s - min_s) / 10.0) AS bin_width
+        MAX(salary) AS max_s
+
     FROM salaries
     WHERE yearID = 2016
     ),
+    stats AS (
+        SELECT *,
+            ((max_s - min_s) / 10.0) AS bin_width
+        FROM stats_raw
+        ),
     salary_bins AS (
 
     SELECT
@@ -213,7 +218,7 @@ WITH yearly_stats AS (
     cur.min_s - pre.min_s AS mindiff,
     cur.max_s - pre.max_s AS maxdiff,
     cur.avg_s - pre.avg_s AS avgdiff
-    FROM yearly_stats cur JOIN yearly_stats pre ON cur.yearID = prev.yearID + 1
+    FROM yearly_stats cur JOIN yearly_stats pre ON cur.yearID = pre.yearID + 1
     ORDER BY cur.yearID
 ;
 
@@ -230,18 +235,19 @@ WITH max_salary AS (
   s.playerID,
   p.nameFirst,
   p.nameLast,
-  s.salry,
+  s.salary,
   s.yearID
   FROM salaries s JOIN people p ON s.playerID = p.playerID
-  JOIN max_salaries ms ON s.yearID = ms.yearID AND s.salary = ms.max_s
+  JOIN max_salary ms ON s.yearID = ms.yearID AND s.salary = ms.max_s
   ORDER BY s.yearID, s.playerID
 ;
 -- Question 4v
 CREATE VIEW q4v(team, diffAvg) AS
   SELECT
-    a.teamID,
+    a.teamID AS team,
     MAX(s.salary) - MIN(s.salary) AS diffAvg
   FROM AllStarFull a JOIN salaries s ON a.playerID = s.playerID AND a.yearID = s.yearID
+  WHERE a.yearID = 2016
   GROUP BY a.teamID
   ORDER BY a.teamID
 
