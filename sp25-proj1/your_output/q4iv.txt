@@ -1,2 +1,1 @@
-playerid|namefirst|namelast|salary|yearid
-1|1|1|1|1
+Error: in prepare, no such table: main.max_salaries

@@ -1,2 +1,1 @@
-namefirst|namelast|birthyear
-1|1|1
+Error: in prepare, no such column: "% %" - should this be a string literal in single-quotes?

@@ -1,2 +1,1 @@
-binid|low|high|count
-1|1|1|1
+Error: in prepare, no such column: max_s

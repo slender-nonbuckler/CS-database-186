@@ -96,7 +96,7 @@ AS
 -- Question 3i
 CREATE VIEW q3i(playerid, namefirst, namelast, yearid, slg)
 AS
-  SELECT b.playerid, b.namefirst, b.namelast, b.yearid
+  SELECT b.playerid, b.namefirst, b.namelast, b.yearid,
     CAST((b.H - b.H2B - b.H3B- b.HR+ 2 * b.H2B + 3 * b.H3B + 4* b.HR) AS FLOAT) /b.AB as slg
    FROM batting b
    INNER JOIN PEOPLE p ON b.playerID = p.playerID
@@ -201,7 +201,7 @@ AS
 WITH yearly_stats AS (
     SELECT
         yearID,
-        MIN(salary) AS min_s
+        MIN(salary) AS min_s,
         MAX(salary) AS max_s,
         AVG(salary) AS avg_s
     FROM salaries
